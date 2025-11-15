@@ -27,15 +27,23 @@ export default function Home() {
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      const botReply = {
-        role: "bot",
-        content:
-          "Great choice! 🌴☀️ Here's a sample itinerary: Day 1: Beach, Day 2: Temple tour, Day 3: Cafe hopping, Day 4: Waterfalls, Day 5: Adventure activities.",
-      };
-      setMessages((prev) => [...prev, botReply]);
-      setIsTyping(false);
-    }, 1800);
+    const response = await fetch("http://localhost:5000/itinerary", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: input }),
+    });
+
+    const data = await response.json();
+
+    const botReply = {
+      role: "bot",
+      content: data.itinerary,
+    };
+    setMessages((prev) => [...prev, botReply]);
+    setIsTyping(false);
+  
   };
 
   return (

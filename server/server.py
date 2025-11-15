@@ -5,6 +5,10 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableSequence
 
+from flask import Flask, request
+from flask_restful import Api, Resource
+from flask_cors import CORS
+
 
 load_dotenv() 
 groq_key = os.getenv("GROQ_API_KEY")
@@ -20,7 +24,12 @@ prompt = PromptTemplate(
     template="""
 You are an expert travel planner.
 
-Create a detailed, structured {days}-day itinerary for {location}.
+You are supposed to extract the location and number of days from the user input text.
+Extract the location and number of days from the following text: {text}
+
+Ignore any typing mistakes.
+
+Create a detailed, structured itinerary for the extracted location for the extracted number of days.
 
 Include:
 - Day-wise plan
@@ -35,26 +44,29 @@ Day 2:
 )
 
 chain = RunnableSequence(
-    prompt | llm | StrOutputParser()
+   prompt | llm | StrOutputParser()
 )
 
-
 def main():
-    print("\n=== LLaMA3 Travel Itinerary Generator ===\n")
+    app = Flask(__name__)
+    CORS(app)
+    api = Api(app)
 
-    location = input("Enter location: ")
-    days = input("Number of days: ")
+    class Itinerary(Resource):
+        def post(self):
+            data = request.get_json()     # Read JSON body
+            text = data.get("text")
 
-    print("\nGenerating itinerary...\n")
+            output = chain.invoke({
+                "text": text
+            })
+            
+            return {"itinerary": output}, 200
+        
+    api.add_resource(Itinerary, "/itinerary")
 
-    output = chain.invoke({
-        "location": location,
-        "days": days
-    })
-
-    print("=== Your Itinerary ===\n")
-    print(output)
-    print("\n=========================\n")
+    app.run(debug=True)
+        
 
 if __name__ == "__main__":
     main()
