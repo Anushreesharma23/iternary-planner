@@ -2,4 +2,7 @@ python-dotenv
 langchain-core
 langchain 
 langchain-groq
+flask
+flask-restful
+Flask-Cors
 
